@@ -1,0 +1,282 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <title>明日方舟肉鸽随机干员生成器</title>
+    <script src="https://cdn.jsdelivr.net/npm/vue@2.7.16/dist/vue.js"></script>
+    <style>
+        .container {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: space-around;
+            width: 100%;
+            border: 1px solid black;
+            margin-top: 20px;
+        }
+        .operator-card {
+            width: 120px;
+            margin: 10px;
+            text-align: center;
+            cursor: pointer;
+            transition: transform 0.3s;
+        }
+        .operator-card img {
+            width: 100%;
+            border-radius: 5px;
+        }
+        .operator-card:hover {
+            transform: scale(1.1);
+        }
+        .operator-card p {
+            margin-top: 5px;
+        }
+        .profession-container {
+            margin: 20px 0;
+        }
+        .profession-box {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: space-around;
+            border: 1px solid #ccc;
+            padding: 10px;
+            margin-bottom: 15px;
+        }
+        .profession-box label {
+            display: block;
+            margin-top: 10px;
+            font-weight: bold;
+        }
+        .profession-box input[type="checkbox"] {
+            margin-right: 5px;
+        }
+        .profession-box button {
+            padding: 10px;
+            margin-top: 20px;
+        }
+        .profession-box select {
+            width: 120px;
+            padding: 5px;
+            margin-bottom: 10px;
+        }
+        button:disabled {
+            background-color: #ccc;
+        }
+    </style>
+</head>
+<body>
+<h1 style="text-align: center">明日方舟肉鸽随机干员生成器</h1>
+<div id="app">
+    <div>
+        <h2>选择职业干员</h2>
+        <div class="profession-container">
+            <div v-for="(operators, profession) in professions" :key="profession" class="profession-box">
+                <label :for="profession + '-select'">{{ professionLabels[profession] }}:</label>
+                <div v-for="operator in operators" :key="operator" class="operator-option">
+                    <input
+                            type="checkbox"
+                            :id="operator + '-checkbox'"
+                            :value="operator"
+                            v-model="selectedOperators[profession]">
+                    <label :for="operator + '-checkbox'">
+                        {{ operator.split('/')[2].split('.')[0] }}
+                    </label>
+                </div>
+            </div>
+        </div>
+
+        <label for="num-operators">输入抽取干员数量:</label>
+        <input type="number" v-model="numOperators" id="num-operators" min="1" :disabled="!isProfessionComplete" placeholder="输入数量">
+
+        <button @click="generateRandomOperators" :disabled="!isProfessionComplete || numOperators <= 0">生成干员</button>
+
+        <button @click="clearSelection" style="margin-left: 10px;">清空选择</button>
+
+        <!-- 显示选择的干员数量 -->
+        <p v-if="selectedOperatorsCount > 0">已选择干员数量: {{ selectedOperatorsCount }}</p>
+    </div>
+
+    <h2 v-if="randomOperators.length > 0">随机干员列表</h2>
+    <section class="container">
+        <div v-for="operator in randomOperators" :key="operator" class="operator-card">
+            <img :src="operator" alt="干员图片">
+            <p>{{ operator.split('/')[2].split('.')[0] }}</p>
+        </div>
+    </section>
+</div>
+
+<script>
+    const app = new Vue({
+        el: '#app',
+        data: {
+            professions: {
+                Xianfeng: [
+                    "./干员图片/忍冬.png",
+                    "./干员图片/缪尔赛思.png",
+                    "./干员图片/伊内丝.png",
+                    "./干员图片/伺夜.png",
+                    "./干员图片/焰尾.png",
+                    "./干员图片/琴柳.png",
+                    "./干员图片/嵯峨.png",
+                    "./干员图片/风笛.png",
+                    "./干员图片/推进之王.png"
+                ],
+                Jinwei: [
+                    "./干员图片/维娜・维多利亚.png",
+                    "./干员图片/佩佩.png",
+                    "./干员图片/乌尔比安.png",
+                    "./干员图片/左乐.png",
+                    "./干员图片/锏.png",
+                    "./干员图片/薇薇安娜.png",
+                    "./干员图片/止颂.png",
+                    "./干员图片/赫德雷.png",
+                    "./干员图片/圣约送葬人.png",
+                    "./干员图片/仇白.png",
+                    "./干员图片/重岳.png",
+                    "./干员图片/玛恩纳.png",
+                    "./干员图片/百炼嘉维尔.png",
+                    "./干员图片/艾丽妮.png",
+                    "./干员图片/耀骑士临光.png",
+                    "./干员图片/帕拉斯.png",
+                    "./干员图片/山.png",
+                    "./干员图片/史尔特尔.png",
+                    "./干员图片/棘刺.png",
+                    "./干员图片/煌.png",
+                    "./干员图片/赫拉格.png",
+                    "./干员图片/陈.png",
+                    "./干员图片/斯卡蒂.png",
+                    "./干员图片/银灰.png"
+                ],
+                Juji: [
+                    "./干员图片/娜仁图亚.png",
+                    "./干员图片/维什戴尔.png",
+                    "./干员图片/莱伊.png",
+                    "./干员图片/提丰.png",
+                    "./干员图片/鸿雪.png",
+                    "./干员图片/菲亚梅塔.png",
+                    "./干员图片/远牙.png",
+                    "./干员图片/假日威龙陈.png",
+                    "./干员图片/灰烬.png",
+                    "./干员图片/空弦.png",
+                    "./干员图片/迷迭香.png",
+                    "./干员图片/早露.png",
+                    "./干员图片/W.png",
+                    "./干员图片/黑.png",
+                    "./干员图片/能天使.png"
+                ],
+                Zhongzhuan: [
+                    "./干员图片/余.png",
+                    "./干员图片/黍.png",
+                    "./干员图片/涤火杰西卡.png",
+                    "./干员图片/斥罪.png",
+                    "./干员图片/号角.png",
+                    "./干员图片/泥岩.png",
+                    "./干员图片/瑕光.png",
+                    "./干员图片/森蚺.png",
+                    "./干员图片/年.png",
+                    "./干员图片/塞雷娅.png",
+                    "./干员图片/星熊.png"
+                ],
+                Yiliao: [
+                    "./干员图片/纯烬艾雅法拉.png",
+                    "./干员图片/焰影苇草.png",
+                    "./干员图片/流明.png",
+                    "./干员图片/凯尔希.png",
+                    "./干员图片/夜莺.png",
+                    "./干员图片/闪灵.png"
+                ],
+                Shushi: [
+                    "./干员图片/烛煌.png",
+                    "./干员图片/荒芜拉普兰德.png",
+                    "./干员图片/玛露西尔.png",
+                    "./干员图片/妮芙.png",
+                    "./干员图片/逻各斯.png",
+                    "./干员图片/霍尔海雅.png",
+                    "./干员图片/林.png",
+                    "./干员图片/黑键.png",
+                    "./干员图片/澄闪.png",
+                    "./干员图片/卡涅利安.png",
+                    "./干员图片/异客.png",
+                    "./干员图片/夕.png",
+                    "./干员图片/刻俄柏.png",
+                    "./干员图片/莫斯提马.png",
+                    "./干员图片/艾雅法拉.png",
+                    "./干员图片/伊芙利特.png"
+                ],
+                Tezhong: [
+                    "./干员图片/引星棘刺.png",
+                    "./干员图片/弑君者.png",
+                    "./干员图片/阿斯卡纶.png",
+                    "./干员图片/艾拉.png",
+                    "./干员图片/琳琅诗怀雅.png",
+                    "./干员图片/麒麟R夜刀.png",
+                    "./干员图片/缄默德克萨斯.png",
+                    "./干员图片/多萝西.png",
+                    "./干员图片/归溟幽灵鲨.png",
+                    "./干员图片/老鲤.png",
+                    "./干员图片/水月.png",
+                    "./干员图片/歌蕾蒂娅.png",
+                    "./干员图片/温蒂.png",
+                    "./干员图片/傀影.png",
+                    "./干员图片/阿.png"
+                ]
+            },
+            selectedOperators: {
+                Xianfeng: [],
+                Jinwei: [],
+                Juji: [],
+                Zhongzhuan: [],
+                Yiliao: [],
+                Shushi: [],
+                Tezhong: []
+            },
+            numOperators: 1,
+            randomOperators: [],
+            professionLabels: {
+                Xianfeng: "先锋",
+                Jinwei: "近卫",
+                Juji: "狙击",
+                Zhongzhuan: "重装",
+                Yiliao: "医疗",
+                Shushi: "术士",
+                Tezhong: "特种"
+            }
+        },
+        computed: {
+            isProfessionComplete() {
+                return Object.values(this.selectedOperators).every(operators => operators.length > 0);
+            },
+            selectedOperatorsCount() {
+                return Object.values(this.selectedOperators).reduce((count, operators) => count + operators.length, 0);
+            }
+        },
+        methods: {
+            generateRandomOperators() {
+                const allSelectedOperators = Object.values(this.selectedOperators).flat();
+                const randomSelection = [];
+
+                let remainingOperators = [...allSelectedOperators];
+                for (let i = 0; i < this.numOperators; i++) {
+                    const randomIndex = Math.floor(Math.random() * remainingOperators.length);
+                    randomSelection.push(remainingOperators[randomIndex]);
+                    remainingOperators.splice(randomIndex, 1);
+                }
+                this.randomOperators = randomSelection;
+            },
+            clearSelection() {
+                this.selectedOperators = {
+                    Xianfeng: [],
+                    Jinwei: [],
+                    Juji: [],
+                    Zhongzhuan: [],
+                    Yiliao: [],
+                    Shushi: [],
+                    Tezhong: []
+                };
+                this.numOperators = 1;
+                this.randomOperators = [];
+            }
+        }
+    })
+</script>
+</body>
+</html>
